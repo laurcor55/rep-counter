@@ -22,12 +22,24 @@ def sample_video(video_path, desired_fps):
   cap.release()
   return imgs
 
-def calculate_background(imgs):
-  im = np.mean(np.array(imgs), axis=0)
+def preprocess(im):
   im = resize(im)
   im = auto_rotate(im)
+  im = np.fliplr(im)
   return im
 
+def calculate_background(imgs):
+  im = np.mean(np.array(imgs), axis=0)
+  return im
+
+def calculate_background_2(imgs):
+  imgs_1 = np.array(imgs)
+  im_background = np.zeros_like(imgs[0])
+  for ii in range(imgs_1.shape[1]):
+    for jj in range(imgs_1.shape[2]):
+      vals, counts = np.unique(imgs_1[:, ii, jj], return_counts=True)
+      im_background[ii, jj] = vals[np.argmax(counts)]
+  return im_background
 
 def auto_rotate(im):
   if im.shape[1]>im.shape[0]:
@@ -56,6 +68,32 @@ def plot_frame_minimal(im, correlation, bar_ind_y_top, bar_ind_y_bottom, bar_ind
   plt.scatter(bar_ind_x, bar_ind_y_top)
   plt.scatter(bar_ind_x, bar_ind_y_bottom)
 
+
+
+def get_features_minimal(im, bar_height_guess):
+  bar_ind_x = int(im.shape[1]/2)
+
+  bar = -1*np.ones(bar_height_guess)
+  bar /= len(bar)
+
+  slice = im[:, bar_ind_x:bar_ind_x+5]  
+  slice = np.sum(slice, axis=1).astype(bar.dtype)
+  slice /= np.max(slice)
+  correlation = np.convolve(slice, bar, 'valid')+1
+  bar_ind_y = np.argmax(correlation)+int(len(bar)/2)-1
+
+
+  bar_patch = im[bar_ind_y-bar_height_guess: bar_ind_y+bar_height_guess,bar_ind_x-2: bar_ind_x+2]
+  edges = np.sum(bar_patch, axis=1)
+  edges = np.convolve(edges, [-1, 2, -1], 'same')
+  edges_top = edges[:bar_height_guess] 
+  edges_bottom = edges[bar_height_guess:] 
+  
+  bar_ind_top = np.argmin(edges_top)+bar_ind_y -len(edges_bottom)
+  bar_ind_bottom = np.argmin(edges_bottom)+bar_ind_y
+  bar_height = bar_ind_bottom - bar_ind_top
+
+  return correlation, bar_ind_top, bar_ind_bottom, bar_ind_x, bar_height
 
 
 ## Antiquated. Keep for reference:
