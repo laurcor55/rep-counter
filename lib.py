@@ -43,28 +43,6 @@ def remove_background(im, im_background):
   im = np.uint8(im * 255)
   return im
 
-def get_features_minimal(im, bar_height_guess):
-  bar_ind_x = int(im.shape[1]/4)
-
-  bar = np.ones(2*bar_height_guess)
-  bar[int(bar_height_guess/2):int(3*bar_height_guess/2)] = -1
-
-  slice = im[:, bar_ind_x:bar_ind_x+5]  
-  slice = np.sum(slice, axis=1)
-  correlation = np.convolve(slice, bar, 'same')
-  bar_ind_y = np.argmax(correlation)
-
-  bar_patch = im[bar_ind_y-bar_height_guess: bar_ind_y+bar_height_guess,bar_ind_x-2: bar_ind_x+2]
-  edges = cv.Canny(bar_patch, 100, 255)
-  edges = np.sum(edges, axis=1)
-  edges_top = edges[:bar_height_guess] 
-  edges_bottom = edges[bar_height_guess:] 
-  bar_ind_top = np.argmax(edges_top)+bar_ind_y -len(edges_bottom)
-  bar_ind_bottom = np.argmax(edges_bottom)+bar_ind_y
-  bar_height = bar_ind_bottom - bar_ind_top
-
-  return correlation, bar_ind_top, bar_ind_bottom, bar_ind_x, bar_height
-
 def plot_frame_minimal(im, correlation, bar_ind_y_top, bar_ind_y_bottom, bar_ind_x):
   plt.figure(figsize=(8, 4))
 
