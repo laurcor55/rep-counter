@@ -39,6 +39,7 @@ def calculate_background(imgs):
   im = np.mean(np.array(imgs), axis=0)
   return im
 
+# Works better than calculate_background, but slower
 def calculate_background_2(imgs):
   imgs_1 = np.array(imgs)
   im_background = np.zeros_like(imgs[0])
