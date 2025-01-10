@@ -17,15 +17,22 @@ def sample_video(video_path, desired_fps):
       ret, frame = cap.read()
       if (np.mod(frame_count, frame_skip_interval) == 0):
         frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        
         imgs.append(frame)
       frame_count += 1
   cap.release()
   return imgs
 
 def preprocess(im):
+  im = im.astype('float64')
   im = resize(im)
   im = auto_rotate(im)
   im = np.fliplr(im)
+  #im = im.astype('float64')
+  #im += np.min(im)
+  #im = im/np.max(im)
+  im = (im - np.min(im)) / (np.max(im) - np.min(im))
+  #im = np.uint8(im * 255)
   return im
 
 def calculate_background(imgs):
@@ -52,7 +59,7 @@ def resize(im):
 def remove_background(im, im_background):
   im = im -im_background
   im = (im - np.min(im)) / (np.max(im) - np.min(im))
-  im = np.uint8(im * 255)
+  #im = np.uint8(im * 255)
   return im
 
 def plot_frame_minimal(im, correlation, bar_ind_y_top, bar_ind_y_bottom, bar_ind_x):
@@ -79,7 +86,7 @@ def get_features_minimal(im, bar_height_guess):
   slice = im[:, bar_ind_x:bar_ind_x+5]  
   slice = np.sum(slice, axis=1).astype(bar.dtype)
   slice /= np.max(slice)
-  correlation = np.convolve(slice, bar, 'valid')+1
+  correlation = np.convolve(slice, bar, 'valid')
   bar_ind_y = np.argmax(correlation)+int(len(bar)/2)-1
 
 
